@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>IGI Discovery</title>
+<style>
+:root {
+  --bg-page:#111113; --bg-primary:#1a1a1a; --bg-secondary:#242428; --border:rgba(255,255,255,.09);
+  --accent:#00aebd; --accent-dim:rgba(0,174,189,.14); --text:#e8e8ea; --text-muted:rgba(255,255,255,.55);
+  --text-dim:rgba(255,255,255,.32); --green:#75be19; --amber:#f6ad55; --red:#e5534b; --radius:4px;
+  --font:'Inter','Roboto',-apple-system,sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg-page); color:var(--text); font-family:var(--font); min-height:100vh; font-size:14px; }
+a { color:var(--accent); text-decoration:none; }
+
+/* ── Header ── */
+.topbar { background:var(--bg-primary); border-bottom:2px solid var(--accent); padding:14px 28px; display:flex; align-items:center; justify-content:space-between; }
+.brand { font-size:17px; font-weight:800; letter-spacing:.01em; }
+.brand .ig { color:var(--accent); }
+.brand small { font-size:10px; font-weight:600; letter-spacing:.14em; color:var(--text-dim); margin-left:12px; text-transform:uppercase; }
+.suite-nav a { font-size:12px; font-weight:600; margin-left:18px; color:var(--text-muted); }
+.suite-nav a:hover { color:var(--accent); }
+.wrap { max-width:1080px; margin:0 auto; padding:28px 24px 80px; }
+
+/* ── Search view ── */
+.hero-search { text-align:center; padding:70px 0 30px; }
+.hero-search h1 { font-size:26px; font-weight:800; margin-bottom:8px; }
+.hero-search p { color:var(--text-muted); font-size:14px; max-width:560px; margin:0 auto 30px; line-height:1.6; }
+.search-row { display:flex; gap:10px; max-width:560px; margin:0 auto 18px; }
+.search-row input { flex:1; background:var(--bg-primary); border:1px solid var(--border); border-radius:var(--radius); padding:13px 16px; font-size:15px; color:var(--text); font-family:inherit; outline:none; }
+.search-row input:focus { border-color:var(--accent); }
+.btn { background:var(--accent); color:#08272a; border:none; border-radius:var(--radius); padding:13px 26px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; }
+.btn:disabled { opacity:.4; cursor:default; }
+.btn-ghost { background:none; border:1px solid var(--border); color:var(--text-muted); padding:8px 14px; font-size:12px; font-weight:600; border-radius:var(--radius); cursor:pointer; font-family:inherit; }
+.btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+.ctx-row { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.ctx-pill { border:1px solid var(--border); background:var(--bg-primary); color:var(--text-muted); border-radius:20px; padding:7px 16px; font-size:12px; font-weight:600; cursor:pointer; }
+.ctx-pill.active { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+
+/* ── Loading view ── */
+.loading-box { max-width:480px; margin:60px auto; background:var(--bg-primary); border:1px solid var(--border); border-radius:var(--radius); padding:28px; }
+.loading-box h2 { font-size:15px; font-weight:700; margin-bottom:18px; }
+.load-step { display:flex; align-items:center; gap:11px; padding:7px 0; font-size:13px; color:var(--text-dim); }
+.load-step.active { color:var(--text); }
+.load-step.done { color:var(--text-muted); }
+.load-step .dot { width:14px; text-align:center; flex-shrink:0; }
+.spin { display:inline-block; animation:spin 1s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── Brief ── */
+.brief-hero { background:var(--bg-primary); border:1px solid var(--border); border-radius:var(--radius); padding:22px 24px; margin-bottom:22px; }
+.brief-hero-top { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.brief-hero h1 { font-size:22px; font-weight:800; }
+.brief-meta { display:flex; gap:8px; align-items:center; margin-top:7px; flex-wrap:wrap; }
+.tag { font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; padding:3px 9px; border-radius:3px; background:var(--bg-secondary); color:var(--text-muted); }
+.tag.cyan { background:var(--accent-dim); color:var(--accent); }
+.brief-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.readiness { margin-top:18px; }
+.readiness-label { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:7px; }
+.readiness-row { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+.relem { border-radius:3px; padding:7px 4px 6px; text-align:center; background:var(--bg-secondary); border-top:3px solid var(--text-dim); }
+.relem.strong { border-top-color:var(--green); }
+.relem.partial { border-top-color:var(--amber); }
+.relem .rl-num { font-size:10px; font-weight:800; color:var(--text-dim); }
+.relem .rl-name { font-size:9.5px; color:var(--text-muted); line-height:1.25; margin-top:2px; }
+
+.sec { margin-bottom:26px; }
+.sec-title { font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); padding-bottom:7px; border-bottom:1px solid var(--border); margin-bottom:13px; display:flex; align-items:center; gap:9px; }
+.interp-badge { font-size:9px; font-weight:700; letter-spacing:.06em; padding:2px 8px; border-radius:9px; background:rgba(246,173,85,.13); color:var(--amber); text-transform:none; }
+.evidence-badge { font-size:9px; font-weight:700; letter-spacing:.06em; padding:2px 8px; border-radius:9px; background:rgba(117,190,25,.12); color:var(--green); text-transform:none; }
+.card { background:var(--bg-primary); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; }
+.card + .card { margin-top:10px; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+@media (max-width:760px){ .grid2,.grid3,.readiness-row{grid-template-columns:1fr;} }
+.src-tag { display:inline-block; font-size:10px; color:var(--text-dim); margin-top:7px; }
+.src-tag b { color:var(--text-muted); font-weight:600; }
+.conf { font-size:11px; margin-right:5px; }
+.el-chip { display:inline-block; font-size:9px; font-weight:700; padding:2px 7px; border-radius:9px; background:var(--bg-secondary); color:var(--text-muted); margin-left:7px; white-space:nowrap; }
+.kv { display:flex; justify-content:space-between; gap:14px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.05); font-size:13px; }
+.kv:last-child { border-bottom:none; }
+.kv .k { color:var(--text-dim); flex-shrink:0; }
+.kv .v { text-align:right; color:var(--text); }
+table.kwt { width:100%; border-collapse:collapse; font-size:12.5px; }
+table.kwt th { text-align:left; font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim); padding:6px 8px; border-bottom:1px solid var(--border); }
+table.kwt td { padding:7px 8px; border-bottom:1px solid rgba(255,255,255,.05); color:var(--text-muted); }
+table.kwt td:first-child { color:var(--text); }
+.pill-na { display:inline-block; font-size:11px; border:1px dashed var(--border); color:var(--text-dim); border-radius:12px; padding:3px 11px; }
+.chip { display:inline-block; background:var(--bg-secondary); border:1px solid var(--border); border-radius:14px; padding:3px 11px; font-size:11.5px; color:var(--text-muted); margin:0 5px 6px 0; }
+.chip.on { border-color:rgba(117,190,25,.4); color:var(--green); }
+.chip.off { border-style:dashed; }
+.hyp { border-left:3px solid var(--amber); }
+.hyp .h-state { font-size:14px; font-weight:600; line-height:1.5; }
+.hyp .h-basis { font-size:12px; color:var(--text-dim); margin-top:6px; }
+.opp-col h4 { font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; margin-bottom:9px; }
+.opp-col.b h4 { color:var(--amber); } .opp-col.a h4 { color:var(--accent); } .opp-col.g h4 { color:var(--text-muted); }
+.opp-item { background:var(--bg-primary); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; margin-bottom:8px; }
+.opp-item .t { font-size:13px; font-weight:700; }
+.opp-item .w { font-size:12px; color:var(--text-muted); margin-top:5px; line-height:1.5; }
+.opp-item .e { font-size:10.5px; color:var(--text-dim); margin-top:5px; }
+.track { margin-bottom:14px; }
+.track-name { font-size:12px; font-weight:800; color:var(--text); text-transform:capitalize; margin-bottom:7px; }
+.q-item { display:flex; gap:10px; align-items:flex-start; padding:8px 0 8px 4px; border-bottom:1px solid rgba(255,255,255,.05); font-size:13.5px; line-height:1.5; }
+.q-item .qm { color:var(--accent); font-weight:800; flex-shrink:0; }
+.q-item .lib-star { color:var(--amber); font-size:11px; flex-shrink:0; }
+.land { border-left:3px solid var(--red); }
+.land .l-warn { font-size:13.5px; font-weight:600; }
+.land .l-handle { font-size:12px; color:var(--text-muted); margin-top:5px; }
+.land .l-basis { font-size:10.5px; color:var(--text-dim); margin-top:4px; }
+.goal-box { border-left:3px solid var(--green); }
+.sources-legend { font-size:11px; color:var(--text-dim); line-height:2; }
+.sources-legend .s-ok { color:var(--green); } .sources-legend .s-na { color:var(--amber); } .sources-legend .s-fail { color:var(--red); }
+.footer-note { margin-top:36px; font-size:10.5px; color:var(--text-dim); line-height:1.7; border-top:1px solid var(--border); padding-top:14px; }
+.err-box { max-width:560px; margin:40px auto; background:rgba(229,83,75,.08); border:1px solid rgba(229,83,75,.35); border-radius:var(--radius); padding:18px; font-size:13px; line-height:1.6; }
+.cr-strip { background:var(--accent-dim); border:1px solid rgba(0,174,189,.3); border-radius:var(--radius); padding:11px 15px; font-size:12.5px; color:var(--text-muted); margin-bottom:22px; }
+
+/* ── Print ── */
+@media print {
+  body { background:#fff; color:#111; font-size:12px; }
+  .topbar, .brief-actions, .footer-note, .sources-legend, #btn-newsearch { display:none !important; }
+  .card, .brief-hero, .opp-item, .loading-box { background:#fff; border-color:#ddd; color:#111; }
+  .sec-title { color:#067; border-color:#ccc; }
+  .hyp .h-state, .opp-item .t, .land .l-warn, .q-item, .kv .v, table.kwt td:first-child { color:#111; }
+  .kv .k, .opp-item .w, .land .l-handle, table.kwt td { color:#444; }
+  .relem { border:1px solid #ddd; border-top-width:3px; }
+  a { color:#067; }
+  .wrap { max-width:100%; padding:0; }
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><span class="ig">IGI</span> Discovery <small>Ignite Growth Intelligence</small></div>
+  <div class="suite-nav">
+    <a href="https://ignitegrowthintelligence.github.io/igi-command-center/" target="_blank">Command</a>
+    <a href="https://ignitegrowthintelligence.github.io/igi-reignite-planner/" target="_blank">Playbook</a>
+    <a href="https://ignitegrowthintelligence.github.io/igi-journey-library/" target="_blank">IGI Library</a>
+  </div>
+</div>
+<div class="wrap">
+
+  <!-- SEARCH -->
+  <div id="view-search">
+    <div class="hero-search">
+      <h1>Walk in the most prepared person in the room.</h1>
+      <p>Enter a prospect's domain. Discovery gathers the evidence — their ads, their search demand, their reputation, their foot traffic — and builds a hypothesis-driven brief around the 7 discovery elements.</p>
+      <div class="search-row">
+        <input id="inp-domain" type="text" placeholder="prospect domain — e.g. eaton.bank" autocomplete="off" spellcheck="false">
+        <button class="btn" id="btn-go" onclick="generate(false)">Build Brief</button>
+      </div>
+      <div class="ctx-row" id="ctx-row"></div>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="view-loading" style="display:none">
+    <div class="loading-box">
+      <h2 id="load-title">Building the brief…</h2>
+      <div id="load-steps"></div>
+    </div>
+  </div>
+
+  <!-- ERROR -->
+  <div id="view-error" style="display:none"><div class="err-box" id="err-msg"></div></div>
+
+  <!-- BRIEF -->
+  <div id="view-brief" style="display:none"></div>
+
+  <div class="footer-note">
+    <strong>Data handling:</strong> Briefs are built from public sources (Google Business Profile, Meta Ad Library, Google Ads Transparency Center, the prospect's website, licensed keyword data, Placer.ai foot-traffic estimates) plus Townsquare's IGI Library. Evidence sections render source data directly with as-of dates; strategy sections are AI interpretation and are labeled as such. No client audio or personal data is collected by this tool. Cached intelligence is stored in company-managed infrastructure.
+  </div>
+</div>
+<script>
+// ════════════════════════════════════════════════════════════════
+// IGI Discovery — Phase 1 frontend. Evidence renders from API data;
+// synthesis sections are labeled interpretation.
+// ════════════════════════════════════════════════════════════════
+const INTEL_BASE = 'https://generate-prospect-intel-337108570573.us-east1.run.app';
+const IGI_INTEL_AUTH = 'b1a61348a178ff44d87aed225e6d716dc9783a8da7110eaffd69ee650dfc2983';
+const CONTEXTS = ['Cold outreach','Existing client','Referral','They reached out','Re-engage'];
+const ELEMENTS = {1:'Current Marketing',2:'Marketing Objective',3:'USP / Messaging',4:'Target Audience',5:'Measurable KPI',6:'Timing',7:'Establish Budget'};
+const LOAD_STEPS = ['Resolving business identity','Fetching website','Scanning ad platforms (Meta + Google)','Pulling search demand','Mapping competitors','Checking foot traffic','Reading the IGI Library','Synthesizing hypotheses & questions'];
+let activeContext = 'Cold outreach';
+let currentBrief = null;
+let loadTimer = null;
+
+const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const $ = id => document.getElementById(id);
+
+// ── Context pills ──
+function renderCtx() {
+  $('ctx-row').innerHTML = CONTEXTS.map(c =>
+    `<div class="ctx-pill ${c===activeContext?'active':''}" onclick="setCtx('${c}')">${c}</div>`).join('');
+}
+function setCtx(c){ activeContext = c; renderCtx(); }
+
+// ── Views ──
+function show(view) {
+  ['view-search','view-loading','view-error','view-brief'].forEach(v => $(v).style.display = v===view?'':'none');
+}
+
+// ── Loading animation (optimistic; completes on response) ──
+function startLoading(domain) {
+  $('load-title').textContent = 'Building the brief for ' + domain + '…';
+  $('load-steps').innerHTML = LOAD_STEPS.map((s,i) =>
+    `<div class="load-step" id="ls-${i}"><span class="dot" id="lsd-${i}">·</span>${s}</div>`).join('');
+  let i = 0;
+  const advance = () => {
+    if (i > 0 && $('ls-'+(i-1))) { $('ls-'+(i-1)).className = 'load-step done'; $('lsd-'+(i-1)).textContent = '✓'; }
+    if (i < LOAD_STEPS.length && $('ls-'+i)) { $('ls-'+i).className = 'load-step active'; $('lsd-'+i).innerHTML = '<span class="spin">◌</span>'; i++; }
+  };
+  advance();
+  loadTimer = setInterval(advance, 3200);
+}
+function stopLoading(){ if (loadTimer) { clearInterval(loadTimer); loadTimer = null; } }
+
+// ── Generate ──
+async function generate(force) {
+  const raw = $('inp-domain').value.trim();
+  if (!raw) return;
+  const domain = raw.toLowerCase().replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0];
+  show('view-loading'); startLoading(domain);
+  try {
+    const r = await fetch(INTEL_BASE + '/discovery/brief', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json','X-IGI-Auth':IGI_INTEL_AUTH },
+      body: JSON.stringify({ domain, meetingContext: activeContext, forceRefresh: !!force })
+    });
+    const data = await r.json();
+    stopLoading();
+    if (!r.ok || data.error) throw new Error(data.error || ('HTTP ' + r.status));
+    currentBrief = data;
+    renderBrief(data);
+    show('view-brief');
+    window.scrollTo(0,0);
+  } catch (e) {
+    stopLoading();
+    $('err-msg').innerHTML = '<strong>Brief failed:</strong> ' + esc(e.message) + '<br><br><button class="btn-ghost" onclick="show(\'view-search\')">← Try again</button>';
+    show('view-error');
+  }
+}
+
+// ── Shared bits ──
+const srcTag = (src, asOf) => `<div class="src-tag">Source: <b>${esc(src)}</b>${asOf?' · as of '+esc(asOf):''}</div>`;
+const elChip = n => n ? `<span class="el-chip" title="Discovery element ${n}">${n} · ${ELEMENTS[n]||''}</span>` : '';
+const naPill = msg => `<span class="pill-na">${esc(msg)}</span>`;
+
+// ── Sections ──
+function secReadiness(sig) {
+  const cells = Object.keys(ELEMENTS).map(n => {
+    const state = (sig && sig[n]) || 'ask';
+    return `<div class="relem ${state==='strong'?'strong':state==='partial'?'partial':''}" title="${state}">
+      <div class="rl-num">${n}</div><div class="rl-name">${ELEMENTS[n]}</div></div>`;
+  }).join('');
+  return `<div class="readiness"><div class="readiness-label">Discovery readiness — pre-call signal by element (green strong · amber partial · gray must-ask)</div>
+    <div class="readiness-row">${cells}</div></div>`;
+}
+
+function secSnapshot(d) {
+  const s = d.synthesis && d.synthesis.businessSnapshot;
+  const idy = d.identity;
+  let rows = '';
+  if (idy) {
+    rows += idy.address ? `<div class="kv"><span class="k">Location</span><span class="v">${esc(idy.address)}</span></div>` : '';
+    rows += idy.rating ? `<div class="kv"><span class="k">Google rating</span><span class="v">★ ${esc(idy.rating)} · ${esc(idy.reviewCount||'?')} reviews <span class="conf">✅</span></span></div>` : '';
+  }
+  if (d.gbp) {
+    rows += d.gbp.verified!=null ? `<div class="kv"><span class="k">GBP claimed</span><span class="v">${d.gbp.verified?'Yes ✅':'NO — unclaimed profile (talking point)'}</span></div>` : '';
+  }
+  let body = '';
+  if (s) {
+    body += `<div style="font-size:14px;line-height:1.65;margin-bottom:10px;">${esc(s.whatTheyDo)}</div>`;
+    body += `<div class="brief-meta"><span class="tag cyan">Growth signal: ${esc(s.growthStageSignal)}</span><span style="font-size:12px;color:var(--text-dim)">${esc(s.growthStageWhy||'')}</span></div>`;
+    body += `<div style="margin-top:12px;font-size:13px;color:var(--text-muted)"><strong style="color:var(--text)">Audience:</strong> <span class="conf">${s.audienceConfidence==='confirmed'?'✅':'💡'}</span>${esc(s.targetAudience)}</div>`;
+  }
+  return `<div class="sec"><div class="sec-title">1 · Business Snapshot ${elChip(2)}</div>
+    <div class="card">${body}${rows?'<div style="margin-top:12px">'+rows+'</div>':''}</div></div>`;
+}
+
+function secMediaMix(d) {
+  const rows = [];
+  // Meta — actual pulls or honest state
+  const m = d.adsMeta;
+  if (m && m.found) {
+    rows.push(card(`<div class="kv"><span class="k">Meta (Facebook/Instagram)</span><span class="v"><span class="conf">✅</span>${m.activeCount} active ad${m.activeCount===1?'':'s'}${m.oldestStart?' · running since '+esc(m.oldestStart):''}</span></div>`
+      + (m.samples&&m.samples.length?`<div style="font-size:12px;color:var(--text-dim);margin-top:6px;line-height:1.5">“${esc(m.samples[0].text||'').slice(0,140)}…”</div>`:'')
+      + srcTag(m.source, m.asOf)));
+  } else if (m && m.found===false) {
+    rows.push(card(`<div class="kv"><span class="k">Meta (Facebook/Instagram)</span><span class="v"><span class="conf">✅</span>${esc(m.note)}</span></div>` + srcTag(m.source, m.asOf)));
+  } else {
+    rows.push(card(`<div class="kv"><span class="k">Meta (Facebook/Instagram)</span><span class="v">${naPill('source pending — SearchAPI credentials')}</span></div>
+      <div style="font-size:11px;margin-top:6px"><a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=US&q=${encodeURIComponent((d.identity&&d.identity.name)||d.domain)}" target="_blank">Check manually in Meta Ad Library ↗</a></div>`));
+  }
+  const g = d.adsGoogle;
+  if (g && g.found) {
+    rows.push(card(`<div class="kv"><span class="k">Google Ads</span><span class="v"><span class="conf">✅</span>${g.creativeCount} creative${g.creativeCount===1?'':'s'} in Transparency Center${g.lastShown?' · last shown '+esc(g.lastShown):''}</span></div>` + srcTag(g.source, g.asOf)));
+  } else if (g && g.found===false) {
+    rows.push(card(`<div class="kv"><span class="k">Google Ads</span><span class="v"><span class="conf">✅</span>${esc(g.note)}</span></div>` + srcTag(g.source, g.asOf)));
+  } else {
+    rows.push(card(`<div class="kv"><span class="k">Google Ads</span><span class="v">${naPill('source pending — SearchAPI credentials')}</span></div>
+      <div style="font-size:11px;margin-top:6px"><a href="https://adstransparency.google.com/?region=US&domain=${encodeURIComponent(d.domain)}" target="_blank">Check manually in Ads Transparency Center ↗</a></div>`));
+  }
+  // Tech / site instrumentation
+  const t = d.tech;
+  if (t) {
+    const p = t.pixels || {};
+    const chips = [
+      ['GTM', p.gtm], ['GA4', p.googleAnalytics], ['Google Ads tag', p.googleAds], ['Remarketing', p.remarketing],
+      ['Meta pixel', p.metaPixel], ['TikTok', p.tiktok], ['LinkedIn', p.linkedin],
+      ['Call tracking' + (p.callTracking?': '+p.callTracking:''), !!p.callTracking],
+      ['Chat' + (p.chatWidget?': '+p.chatWidget:''), !!p.chatWidget],
+    ].map(([label,on]) => `<span class="chip ${on?'on':'off'}">${on?'✓':'✗'} ${esc(label)}</span>`).join('');
+    rows.push(card(`<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:9px">Website instrumentation <span class="conf">✅</span>· CMS: ${esc(t.cms)} · Readiness: ${esc((t.digitalReadiness&&t.digitalReadiness.label)||'—')}</div>${chips}`
+      + (t.deadAnalyticsId ? `<div style="margin-top:8px;font-size:12px;color:var(--amber)">⚠ Legacy analytics tag ${esc(t.deadAnalyticsId)} — Universal Analytics stopped collecting data July 2023. Their measurement may have been dark since then.</div>` : '')
+      + srcTag('Site scan (' + esc((d.websiteQuality&&d.websiteQuality.via)||'direct') + ')', t.asOf)));
+  }
+  // Library benchmarks (evidence-grade, curated)
+  const lib = d.library;
+  if (lib && lib.ad_benchmarks && lib.ad_benchmarks.length) {
+    const b = lib.ad_benchmarks.map(x => `<div class="kv"><span class="k">${esc(x.channel)}</span><span class="v">${[x.cpc?'CPC '+esc(x.cpc):null, x.cpl?'CPL '+esc(x.cpl):null, x.cvr?'CVR '+esc(x.cvr):null].filter(Boolean).join(' · ')||esc(x.note||'')}</span></div>`).join('');
+    rows.push(card(`<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">What this category costs (IGI Library benchmarks) <span class="conf">✅</span></div>${b}` + srcTag('IGI Library — curated ' + esc(lib.category) + ' benchmarks', '')));
+  }
+  return `<div class="sec"><div class="sec-title">2 · Current Media Mix ${elChip(1)} <span class="evidence-badge">EVIDENCE</span></div>${rows.join('')}</div>`;
+}
+const card = inner => `<div class="card">${inner}</div>`;
+
+function secSearchDemand(d) {
+  const k = d.keywords;
+  let body;
+  if (k && k.top && k.top.length) {
+    const rows = k.top.slice(0,12).map(x =>
+      `<tr><td>${esc(x.keyword)}</td><td>${x.volume!=null?Number(x.volume).toLocaleString():'—'}</td><td>${x.cpc!=null?'$'+x.cpc.toFixed(2):'—'}</td><td>${x.competition!=null?esc(String(x.competition)):'—'}</td></tr>`).join('');
+    body = card(`<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px"><span class="conf">✅</span><strong style="color:var(--text)">${k.totalKeywords}</strong> keywords found · location: <strong style="color:var(--text)">${esc(k.locationUsed)}</strong></div>
+      <table class="kwt"><tr><th>Keyword</th><th>Monthly searches</th><th>CPC</th><th>Competition</th></tr>${rows}</table>` + srcTag(k.source, k.asOf));
+  } else if (k === null || (d.sources && d.sources.keywords === 'unavailable')) {
+    body = card(`${naPill('source pending — DataForSEO credentials')} <span style="font-size:12px;color:var(--text-dim)">City-level search volumes and CPCs will appear here once the account is wired in.</span>`);
+  } else {
+    body = card(`<span class="conf">✅</span><span style="font-size:13px;color:var(--text-muted)">No keyword data returned for this domain as of today — common for very small or new sites.</span>`);
+  }
+  return `<div class="sec"><div class="sec-title">3 · Search Demand ${elChip(5)} <span class="evidence-badge">EVIDENCE</span></div>${body}</div>`;
+}
+
+function secReputation(d) {
+  const rows = [];
+  const me = { name: (d.identity&&d.identity.name)||d.domain, rating: (d.gbp&&d.gbp.rating)||(d.identity&&d.identity.rating), count: (d.gbp&&d.gbp.reviewCount)||(d.identity&&d.identity.reviewCount) };
+  const comp = d.competitors || [];
+  if (me.rating || comp.length) {
+    const line = (n,r,c,hl) => `<div class="kv"><span class="k" style="${hl?'color:var(--accent);font-weight:700':''}">${esc(n)}</span><span class="v">${r?'★ '+esc(r)+' · '+esc(c||'?')+' reviews':'—'}</span></div>`;
+    rows.push(card(`<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Rating vs. nearby competitors <span class="conf">✅</span></div>`
+      + line(me.name + ' (prospect)', me.rating, me.count, true)
+      + comp.map(c => line(c.name, c.rating, c.reviewCount, false)).join('')
+      + srcTag('Google Places' + (d.gbp ? ' + GBP' : ''), todayStr())));
+  } else {
+    rows.push(card(naPill('No domain-verified Google profile found') + ' <span style="font-size:12px;color:var(--text-dim)">No reputation data — worth validating on the call.</span>'));
+  }
+  return `<div class="sec"><div class="sec-title">4 · Reputation Signals ${elChip(3)} <span class="evidence-badge">EVIDENCE</span></div>${rows.join('')}</div>`;
+}
+const todayStr = () => new Date().toISOString().slice(0,10);
+
+function secFootTraffic(d) {
+  const p = d.placer;
+  if (!p) return '';
+  const yoy = p.yoyChangePct;
+  return `<div class="sec"><div class="sec-title">4b · Foot Traffic Intelligence ${elChip(4)} <span class="evidence-badge">EVIDENCE</span></div>
+    ${card(`<div class="kv"><span class="k">Visits, last 12 months</span><span class="v"><span class="conf">✅</span>${p.last12moVisits!=null?Number(p.last12moVisits).toLocaleString():'—'}</span></div>
+    ${yoy!=null?`<div class="kv"><span class="k">Year-over-year</span><span class="v" style="color:${yoy<0?'var(--red)':'var(--green)'}">${yoy>0?'+':''}${yoy}%</span></div>`:''}
+    <div style="font-size:11px;color:var(--text-dim);margin-top:7px">${esc(p.note||'')}</div>` + srcTag(p.attribution||'Placer.ai', p.asOf))}</div>`;
+}
+
+function secCompetitorAds(d) {
+  const ca = d.competitorAds;
+  if (!ca || !ca.length) return '';
+  const rows = ca.map(c => {
+    const m = c.meta, g = c.google;
+    const bits = [];
+    if (m && m.found) bits.push(`Meta: ${m.activeCount} active since ${esc(m.oldestStart||'?')}`);
+    else if (m) bits.push('Meta: none found');
+    if (g && g.found) bits.push(`Google: ${g.creativeCount} creatives`);
+    else if (g) bits.push('Google: none found');
+    return `<div class="kv"><span class="k">${esc(c.name)}</span><span class="v"><span class="conf">✅</span>${bits.join(' · ')||'—'}</span></div>`;
+  }).join('');
+  return `<div class="sec"><div class="sec-title">2b · Competitor Ad Activity ${elChip(1)} <span class="evidence-badge">EVIDENCE</span></div>
+    ${card(rows + srcTag('Meta Ad Library + Google Ads Transparency via SearchAPI', todayStr()))}</div>`;
+}
+
+function secHypotheses(d) {
+  const hs = (d.synthesis && d.synthesis.hypotheses) || [];
+  if (!hs.length) return '';
+  return `<div class="sec"><div class="sec-title">5 · Working Hypotheses <span class="interp-badge">INTERPRETATION</span></div>
+    ${hs.map(h => card(`<div class="hyp" style="border:none;border-left:none;padding:0">
+      <div class="h-state"><strong style="color:var(--amber)">${esc(h.id)}</strong> · ${esc(h.statement)} ${elChip(h.element)}</div>
+      <div class="h-basis">💡 Basis: ${esc(h.evidenceBasis)}</div></div>`)).join('')}</div>`;
+}
+
+function secOpportunities(d) {
+  const o = d.synthesis && d.synthesis.opportunities;
+  if (!o) return '';
+  const col = (items, cls, title, sub) => `<div class="opp-col ${cls}"><h4>${title}</h4><div style="font-size:10.5px;color:var(--text-dim);margin:-4px 0 9px">${sub}</div>
+    ${(items||[]).map(x => `<div class="opp-item"><div class="t">${esc(x.title)} ${elChip(x.element)}</div><div class="w">${esc(x.why)}</div><div class="e">💡 ${esc(x.evidenceBasis||'')}</div></div>`).join('') || '<div class="pill-na">none identified</div>'}</div>`;
+  return `<div class="sec"><div class="sec-title">6 · Opportunity Map <span class="interp-badge">INTERPRETATION</span></div>
+    <div class="grid3">
+      ${col(o.buried,'b','Buried Opportunities','They likely don\'t see these themselves')}
+      ${col(o.salesAngles,'a','Sales Angles','Our strongest ways in')}
+      ${col(o.channelGaps,'g','Channel Gaps','Visible absence vs. category norm')}
+    </div></div>`;
+}
+
+function secQuestions(d) {
+  const ts = (d.synthesis && d.synthesis.questionTracks) || [];
+  if (!ts.length) return '';
+  return `<div class="sec"><div class="sec-title">7 · Question Tracks <span class="interp-badge">INTERPRETATION</span> <span style="font-size:10px;color:var(--text-dim);text-transform:none;font-weight:400">★ = from IGI Library curation · tags show element + hypothesis tested</span></div>
+    ${card(ts.map(t => `<div class="track"><div class="track-name">${esc(t.track)}</div>
+      ${(t.questions||[]).map(q => `<div class="q-item"><span class="qm">?</span><span>${esc(q.q)}${q.fromLibrary?' <span class="lib-star" title="From IGI Library">★</span>':''}${elChip(q.element)}${q.tests?`<span class="el-chip" style="background:rgba(246,173,85,.12);color:var(--amber)">tests ${esc(q.tests)}</span>`:''}</span></div>`).join('')}
+    </div>`).join(''))}</div>`;
+}
+
+function secLandmines(d) {
+  const ls = (d.synthesis && d.synthesis.landmines) || [];
+  const g = d.synthesis && d.synthesis.callGoals;
+  let out = '';
+  if (ls.length) {
+    out += `<div class="sec"><div class="sec-title">8 · Landmines <span class="interp-badge">INTERPRETATION</span></div>
+      ${ls.map(l => card(`<div class="land" style="border:none;padding:0"><div class="l-warn">⚠ ${esc(l.warning)}</div>
+        ${l.suggestedHandling?`<div class="l-handle">→ ${esc(l.suggestedHandling)}</div>`:''}
+        <div class="l-basis">💡 ${esc(l.basis||'')}</div></div>`)).join('')}</div>`;
+  }
+  if (g) {
+    out += `<div class="sec"><div class="sec-title">9 · Call Goals <span class="interp-badge">INTERPRETATION</span></div>
+      ${card(`<div class="goal-box" style="border:none;padding:0">
+        ${(g.mustProduce||[]).map(x => `<div class="q-item"><span class="qm" style="color:var(--green)">✓</span><span>${esc(x)}</span></div>`).join('')}
+        ${g.nextStepAsk?`<div style="margin-top:11px;font-size:13.5px"><strong style="color:var(--green)">Next-step ask:</strong> ${esc(g.nextStepAsk)}</div>`:''}</div>`)}</div>`;
+  }
+  return out;
+}
+
+function secSources(d) {
+  const s = d.sources || {};
+  const label = { ok:['✓ live','s-ok'], empty:['– empty','s-na'], skipped:['– skipped','s-na'], unavailable:['◌ awaiting credentials','s-na'], failed:['✗ failed','s-fail'] };
+  const items = Object.entries(s).map(([k,v]) => { const [txt,cls] = label[v]||[v,'']; return `${esc(k)} <span class="${cls}">${txt}</span>`; });
+  return `<div class="sec sources-legend"><div class="sec-title" style="color:var(--text-dim)">Source Status</div>${items.join(' &nbsp;·&nbsp; ')}</div>`;
+}
+
+// ── Brief assembly ──
+function renderBrief(d) {
+  const name = (d.identity && d.identity.name) || d.domain;
+  const lib = d.library;
+  const cr = d.callready;
+  $('view-brief').innerHTML = `
+    <div class="brief-hero">
+      <div class="brief-hero-top">
+        <div>
+          <h1>${esc(name)}</h1>
+          <div class="brief-meta">
+            ${d.category?`<span class="tag cyan">${esc(d.category)}</span>`:''}
+            ${lib&&lib.tier?`<span class="tag">${esc(lib.tier)} tier</span>`:''}
+            <span class="tag">${esc(d.meetingContext)}</span>
+            <span style="font-size:11px;color:var(--text-dim)">${esc(d.domain)} · generated ${new Date(d.generatedAt).toLocaleString()}</span>
+          </div>
+        </div>
+        <div class="brief-actions">
+          <button class="btn-ghost" id="btn-newsearch" onclick="show('view-search')">← New brief</button>
+          <button class="btn-ghost" onclick="generate(true)">↻ Force refresh</button>
+          <button class="btn-ghost" onclick="copySummary()">⧉ Copy for CRM</button>
+          <button class="btn-ghost" onclick="window.print()">⎙ Print / PDF</button>
+        </div>
+      </div>
+      ${secReadiness(d.synthesis && d.synthesis.elementSignals)}
+    </div>
+    ${cr && cr.bestMeetingAngle ? `<div class="cr-strip"><strong style="color:var(--accent)">CallReady continuity:</strong> the meeting was earned on — “${esc(cr.bestMeetingAngle)}” — this brief extends that thread, it doesn't restart it.</div>` : ''}
+    ${secSnapshot(d)}
+    ${secMediaMix(d)}
+    ${secCompetitorAds(d)}
+    ${secSearchDemand(d)}
+    ${secReputation(d)}
+    ${secFootTraffic(d)}
+    ${secHypotheses(d)}
+    ${secOpportunities(d)}
+    ${secQuestions(d)}
+    ${secLandmines(d)}
+    ${secSources(d)}
+  `;
+}
+
+// ── CRM summary ──
+function copySummary() {
+  const d = currentBrief; if (!d) return;
+  const s = d.synthesis || {};
+  const lines = [];
+  lines.push('IGI DISCOVERY BRIEF — ' + ((d.identity&&d.identity.name)||d.domain) + ' (' + d.domain + ')');
+  lines.push('Category: ' + (d.category||'?') + ' | Context: ' + d.meetingContext + ' | ' + new Date(d.generatedAt).toLocaleDateString());
+  if (s.businessSnapshot) lines.push('\nSNAPSHOT: ' + s.businessSnapshot.whatTheyDo + ' [Growth: ' + s.businessSnapshot.growthStageSignal + ']');
+  if (d.adsMeta) lines.push('META ADS: ' + (d.adsMeta.found ? d.adsMeta.activeCount + ' active since ' + (d.adsMeta.oldestStart||'?') : d.adsMeta.note) + ' (' + (d.adsMeta.asOf||'') + ')');
+  if (d.adsGoogle) lines.push('GOOGLE ADS: ' + (d.adsGoogle.found ? d.adsGoogle.creativeCount + ' creatives' : d.adsGoogle.note));
+  (s.hypotheses||[]).forEach(h => lines.push('HYPOTHESIS ' + h.id + ': ' + h.statement));
+  if (s.callGoals) { lines.push('CALL GOALS: ' + (s.callGoals.mustProduce||[]).join(' | ')); lines.push('NEXT STEP: ' + (s.callGoals.nextStepAsk||'')); }
+  navigator.clipboard.writeText(lines.join('\n')).then(() => alert('Brief summary copied — paste into CRM notes.'));
+}
+
+// ── Init ──
+renderCtx();
+$('inp-domain').addEventListener('keydown', e => { if (e.key === 'Enter') generate(false); });
+const params = new URLSearchParams(location.search);
+if (params.get('domain')) {
+  $('inp-domain').value = params.get('domain');
+  if (params.get('context') && CONTEXTS.includes(params.get('context'))) setCtx(params.get('context'));
+  generate(false);
+}
+</script>
+</body>
+</html>
