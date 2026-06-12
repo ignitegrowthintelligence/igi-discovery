@@ -469,6 +469,7 @@ function renderBrief(d) {
       ${secReadiness(d.synthesis && d.synthesis.elementSignals)}
     </div>
     ${cr && cr.bestMeetingAngle ? `<div class="cr-strip"><strong style="color:var(--accent)">CallReady continuity:</strong> the meeting was earned on — “${esc(cr.bestMeetingAngle)}” — this brief extends that thread, it doesn't restart it.</div>` : ''}
+    ${!d.synthesis ? `<div class="err-box" style="margin:0 0 22px;max-width:none"><strong>Strategy layer didn't complete on this run.</strong> The evidence below loaded fine, but the hypothesis/question synthesis failed — usually transient. <button class="btn-ghost" onclick="generate(false)" style="margin-left:10px">↻ Retry synthesis</button></div>` : ''}
     ${secSnapshot(d)}
     ${secMediaMix(d)}
     ${secCompetitorAds(d)}
