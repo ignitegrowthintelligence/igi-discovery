@@ -116,6 +116,35 @@ table.kwt td:first-child { color:var(--text); }
 .err-box { max-width:560px; margin:40px auto; background:rgba(229,83,75,.08); border:1px solid rgba(229,83,75,.35); border-radius:var(--radius); padding:18px; font-size:13px; line-height:1.6; }
 .cr-strip { background:var(--accent-dim); border:1px solid rgba(0,174,189,.3); border-radius:var(--radius); padding:11px 15px; font-size:12.5px; color:var(--text-muted); margin-bottom:22px; }
 
+.opp-math { border:1px solid rgba(0,174,189,.4); border-left:4px solid var(--accent); background:linear-gradient(135deg, rgba(0,174,189,.07), var(--bg-primary)); }
+.opp-math .big-line { font-size:15px; font-weight:700; line-height:1.55; }
+.opp-math .model-row { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.06); font-size:13px; flex-wrap:wrap; }
+.opp-math .assump { font-size:10.5px; color:var(--text-dim); margin-top:9px; line-height:1.6; }
+.audit-check { display:flex; align-items:flex-start; gap:9px; padding:6px 0; font-size:13px; border-bottom:1px solid rgba(255,255,255,.05); }
+.audit-check:last-child { border-bottom:none; }
+.audit-check .ok { color:var(--green); flex-shrink:0; } .audit-check .bad { color:var(--red); flex-shrink:0; }
+.audit-check .note { color:var(--text-dim); font-size:11.5px; margin-left:auto; text-align:right; }
+.score-pill { display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:800; padding:5px 13px; border-radius:16px; background:var(--bg-secondary); }
+.score-pill.good { color:var(--green); } .score-pill.mid { color:var(--amber); } .score-pill.poor { color:var(--red); }
+.baseline-chip { font-size:10px; font-weight:700; letter-spacing:.06em; padding:3px 9px; border-radius:3px; background:rgba(117,190,25,.12); color:var(--green); }
+.crit-col { font-size:12.5px; line-height:1.55; }
+.crit-col h5 { font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px; }
+/* ── Client view ── */
+.client-doc { background:#fff; color:#1c1c1e; border-radius:6px; padding:38px 44px; font-size:13.5px; line-height:1.6; }
+.client-doc h1 { font-size:22px; margin-bottom:4px; color:#0d2a2d; }
+.client-doc h2 { font-size:13px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#067c87; margin:26px 0 10px; border-bottom:2px solid #e3eced; padding-bottom:6px; }
+.client-doc .cd-sub { color:#5a6a6c; font-size:12px; margin-bottom:4px; }
+.client-doc .cd-brand { display:flex; justify-content:space-between; align-items:baseline; border-bottom:3px solid #00aebd; padding-bottom:14px; margin-bottom:8px; }
+.client-doc .cd-brand .logo { font-weight:900; font-size:15px; color:#0d2a2d; letter-spacing:.02em; }
+.client-doc .cd-brand .logo span { color:#00aebd; }
+.client-doc table { width:100%; border-collapse:collapse; font-size:12.5px; }
+.client-doc td, .client-doc th { padding:7px 9px; border-bottom:1px solid #e8eeef; text-align:left; }
+.client-doc .cd-finding { display:flex; gap:10px; padding:7px 0; border-bottom:1px solid #eef3f4; }
+.client-doc .cd-finding .ok { color:#3a9e36; } .client-doc .cd-finding .bad { color:#c34f42; }
+.client-doc .cd-foot { margin-top:30px; padding-top:12px; border-top:1px solid #dde6e7; font-size:10px; color:#8a9799; line-height:1.6; }
+.client-doc .cd-opp { background:#f0fafb; border-left:4px solid #00aebd; padding:14px 18px; border-radius:4px; margin:8px 0; }
+@media print { .client-doc { padding:0; border-radius:0; } }
+
 /* ── Print ── */
 @media print {
   body { background:#fff; color:#111; font-size:12px; }
@@ -457,12 +486,14 @@ function renderBrief(d) {
             ${lib&&lib.tier?`<span class="tag">${esc(lib.tier)} tier</span>`:''}
             <span class="tag">${esc(d.meetingContext)}</span>
             <span style="font-size:11px;color:var(--text-dim)">${esc(d.domain)} · generated ${new Date(d.generatedAt).toLocaleString()}</span>
+            ${d.baseline && d.baseline.capturedAt ? `<span class="baseline-chip" title="Day-0 snapshot for before/after proof">BASELINE ${new Date(d.baseline.capturedAt).toLocaleDateString()}</span>` : ''}
           </div>
         </div>
         <div class="brief-actions">
           <button class="btn-ghost" id="btn-newsearch" onclick="show('view-search')">← New brief</button>
           <button class="btn-ghost" onclick="generate(true)">↻ Force refresh</button>
           <button class="btn-ghost" onclick="copySummary()">⧉ Copy for CRM</button>
+          <button class="btn-ghost" onclick="toggleClientView()" style="border-color:rgba(0,174,189,.5);color:var(--accent)">📄 Client Snapshot</button>
           <button class="btn-ghost" onclick="window.print()">⎙ Print / PDF</button>
         </div>
       </div>
@@ -471,7 +502,13 @@ function renderBrief(d) {
     ${cr && cr.bestMeetingAngle ? `<div class="cr-strip"><strong style="color:var(--accent)">CallReady continuity:</strong> the meeting was earned on — “${esc(cr.bestMeetingAngle)}” — this brief extends that thread, it doesn't restart it.</div>` : ''}
     ${!d.synthesis ? `<div class="err-box" style="margin:0 0 22px;max-width:none"><strong>Strategy layer didn't complete on this run.</strong> The evidence below loaded fine, but the hypothesis/question synthesis failed — usually transient. <button class="btn-ghost" onclick="generate(false)" style="margin-left:10px">↻ Retry synthesis</button></div>` : ''}
     ${secSnapshot(d)}
+    ${secOpportunityMath(d)}
     ${secMediaMix(d)}
+    ${secCreativeCritique(d)}
+    ${secWebAudit(d)}
+    ${secGbpAudit(d)}
+    ${secLocalPack(d)}
+    ${secBaselineDeltas(d)}
     ${secCompetitorAds(d)}
     ${secSearchDemand(d)}
     ${secReputation(d)}
@@ -497,6 +534,158 @@ function copySummary() {
   (s.hypotheses||[]).forEach(h => lines.push('HYPOTHESIS ' + h.id + ': ' + h.statement));
   if (s.callGoals) { lines.push('CALL GOALS: ' + (s.callGoals.mustProduce||[]).join(' | ')); lines.push('NEXT STEP: ' + (s.callGoals.nextStepAsk||'')); }
   navigator.clipboard.writeText(lines.join('\n')).then(() => alert('Brief summary copied — paste into CRM notes.'));
+}
+
+// ── AGENCY-GRADE SECTIONS ──
+function scoreCls(n, goodAt, midAt) { return n == null ? '' : n >= goodAt ? 'good' : n >= midAt ? 'mid' : 'poor'; }
+
+function secOpportunityMath(d) {
+  const o = d.opportunityMath;
+  if (!o) return '';
+  let body = '';
+  if (o.demand) {
+    body += `<div class="big-line">📊 ${Number(o.demand.monthlySearches).toLocaleString()} monthly searches tracked for their services in ${esc(o.demand.locationUsed)}</div>`;
+    body += o.demand.models.map(m =>
+      `<div class="model-row"><span>Capture <strong>${m.sharePct}%</strong> of that demand</span>
+       <span>${m.leads.toLocaleString()} leads/mo → <strong style="color:var(--accent)">$${m.monthlyRevenueOpportunity.toLocaleString()}/mo opportunity</strong>${m.roas ? ' · ~' + m.roas + 'x return on est. spend' : ''}</span></div>`).join('');
+  } else if (o.demandPending) {
+    body += `<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">${esc(o.demandPending)}</div>`;
+  }
+  if (o.breakeven) {
+    body += `<div class="big-line" style="margin-top:${o.demand ? '12px' : '0'}">💰 ${esc(o.breakeven.line)}</div>`;
+  }
+  if (o.assumptions && o.assumptions.length) {
+    body += `<div class="assump">Assumptions: ${o.assumptions.map(esc).join(' · ')}</div>`;
+  }
+  body += srcTag((o.sources || []).join('; '), o.asOf) ;
+  return `<div class="sec"><div class="sec-title">1b · What The Demand Is Worth ${elChip(7)} <span class="evidence-badge">COMPUTED EVIDENCE</span></div>
+    <div class="card opp-math">${body}</div></div>`;
+}
+
+function secWebAudit(d) {
+  const p = d.psi, c = d.conversionAudit;
+  if (!p && !c) return '';
+  let body = '';
+  if (p) {
+    const cls = scoreCls(p.performanceScore, 80, 50);
+    body += `<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:11px">
+      <span class="score-pill ${cls}">Mobile speed: ${p.performanceScore != null ? p.performanceScore + '/100' : '—'}</span>
+      ${p.fieldCategory ? `<span class="score-pill ${p.fieldCategory==='FAST'?'good':p.fieldCategory==='AVERAGE'?'mid':'poor'}">Real users: ${esc(p.fieldCategory)}</span>` : ''}
+      ${p.lcp ? `<span style="font-size:12px;color:var(--text-dim)">Largest paint: ${esc(p.lcp)}</span>` : ''}
+      ${p.cls ? `<span style="font-size:12px;color:var(--text-dim)">Layout shift: ${esc(p.cls)}</span>` : ''}
+    </div>`;
+  }
+  if (c) {
+    body += `<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Path to conversion — ${c.passed}/${c.total} in place <span class="conf">✅</span></div>`
+      + c.checks.map(x => `<div class="audit-check"><span class="${x.ok?'ok':'bad'}">${x.ok?'✓':'✗'}</span><span>${esc(x.item)}</span><span class="note">${esc(x.note||'')}</span></div>`).join('');
+  }
+  body += srcTag('Google PageSpeed Insights + site scan', (p && p.asOf) || (c && c.asOf) || todayStr());
+  return `<div class="sec"><div class="sec-title">2c · Website & Path to Conversion ${elChip(5)} <span class="evidence-badge">EVIDENCE</span></div>
+    <div class="card">${body}</div></div>`;
+}
+
+function secGbpAudit(d) {
+  const g = d.gbpAudit;
+  if (!g) return '';
+  const cls = scoreCls(g.score, 80, 55);
+  let body = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:11px">
+    <span class="score-pill ${cls}">GBP completeness: ${g.score != null ? g.score + '%' : '—'}</span></div>`
+    + g.checks.map(x => `<div class="audit-check"><span class="${x.ok?'ok':'bad'}">${x.ok?'✓':'✗'}</span><span>${esc(x.item)}</span><span class="note">${esc(x.note||'')}</span></div>`).join('');
+  if (g.pending && g.pending.length) body += `<div style="margin-top:8px">${naPill(g.pending[0])}</div>`;
+  body += srcTag(g.source, g.asOf);
+  return `<div class="sec"><div class="sec-title">4c · Google Business Profile Audit ${elChip(1)} <span class="evidence-badge">EVIDENCE</span></div>
+    <div class="card">${body}</div></div>`;
+}
+
+function secLocalPack(d) {
+  const lp = d.localPack;
+  if (!lp && d.sources && d.sources.local_pack !== 'unavailable') return '';
+  let body;
+  if (lp && lp.results) {
+    body = lp.results.map(r =>
+      `<div class="kv"><span class="k">"${esc(r.keyword)}"</span><span class="v">${r.position ? (r.position <= 3 ? '<span style="color:var(--green)">' : r.position <= 10 ? '<span style="color:var(--amber)">' : '<span style="color:var(--red)">') + 'Position #' + r.position + '</span>' : '<span style="color:var(--red)">Not in top 20</span>'} · top 3: ${r.topThree.map(t=>esc(t.name)).join(', ')}</span></div>`).join('')
+      + srcTag(lp.source, lp.asOf);
+  } else {
+    body = naPill('source pending — DataForSEO credentials') + ' <span style="font-size:12px;color:var(--text-dim)">Map-pack position for money keywords will appear here.</span>';
+  }
+  return `<div class="sec"><div class="sec-title">4d · Local Pack Position ${elChip(1)} <span class="evidence-badge">EVIDENCE</span></div>
+    <div class="card">${body}</div></div>`;
+}
+
+function secCreativeCritique(d) {
+  const cc = d.synthesis && d.synthesis.creativeCritique;
+  if (!cc || (!cc.strengths && !cc.weaknesses)) return '';
+  return `<div class="sec"><div class="sec-title">2b · Creative Critique <span class="interp-badge">INTERPRETATION</span></div>
+    <div class="card"><div class="grid2">
+      <div class="crit-col"><h5 style="color:var(--green)">What their ads do well</h5>${(cc.strengths||[]).map(s=>`<div class="audit-check"><span class="ok">+</span><span>${esc(s)}</span></div>`).join('')||'—'}</div>
+      <div class="crit-col"><h5 style="color:var(--red)">Where the creative falls short</h5>${(cc.weaknesses||[]).map(s=>`<div class="audit-check"><span class="bad">−</span><span>${esc(s)}</span></div>`).join('')||'—'}</div>
+    </div>${cc.agencyTake?`<div style="margin-top:11px;font-size:13px;color:var(--accent);font-weight:600">Ignite take: ${esc(cc.agencyTake)}</div>`:''}</div></div>`;
+}
+
+function secBaselineDeltas(d) {
+  const ds = d.sinceBaseline;
+  if (!ds || !ds.length) return '';
+  return `<div class="sec"><div class="sec-title">Since Day-0 Baseline (${new Date(d.baseline.capturedAt).toLocaleDateString()}) <span class="evidence-badge">EVIDENCE</span></div>
+    <div class="card">${ds.map(x => `<div class="kv"><span class="k">${esc(x.metric)}</span>
+      <span class="v">${esc(String(x.from))}${esc(x.fmt)} → <strong style="color:${x.change>0?'var(--green)':'var(--red)'}">${esc(String(x.to))}${esc(x.fmt)} (${x.change>0?'+':''}${x.change})</strong></span></div>`).join('')}</div></div>`;
+}
+
+// ── CLIENT SNAPSHOT (leave-behind — strategy layer excluded by design) ──
+let clientMode = false;
+function toggleClientView() {
+  clientMode = !clientMode;
+  if (clientMode) renderClientView(currentBrief);
+  else renderBrief(currentBrief);
+  window.scrollTo(0, 0);
+}
+
+function renderClientView(d) {
+  if (!d) return;
+  const name = (d.identity && d.identity.name) || d.domain;
+  const o = d.opportunityMath, p = d.psi, c = d.conversionAudit, g = d.gbpAudit;
+  const m = d.adsMeta, ga = d.adsGoogle, k = d.keywords;
+  const finding = (ok, text, note) => `<div class="cd-finding"><span class="${ok?'ok':'bad'}">${ok?'✓':'✗'}</span><span>${esc(text)}</span>${note?`<span style="margin-left:auto;color:#8a9799;font-size:11px">${esc(note)}</span>`:''}</div>`;
+  let html = `<div class="client-doc">
+    <div class="cd-brand"><div class="logo"><span>IGNITE</span> · Townsquare</div><div class="cd-sub">Digital Presence Snapshot · ${new Date().toLocaleDateString()}</div></div>
+    <h1>${esc(name)}</h1>
+    <div class="cd-sub">${esc(d.identity && d.identity.address || d.domain)}</div>`;
+  if (d.synthesis && d.synthesis.businessSnapshot) {
+    html += `<p style="margin-top:14px">${esc(d.synthesis.businessSnapshot.whatTheyDo)}</p>`;
+  }
+  // Findings
+  html += `<h2>What we looked at</h2>`;
+  if (p && p.performanceScore != null) html += finding(p.performanceScore >= 80, 'Mobile site speed: ' + p.performanceScore + '/100' + (p.fieldCategory ? ' (' + p.fieldCategory.toLowerCase() + ' for real visitors)' : ''), 'Google PageSpeed');
+  if (c) c.checks.forEach(x => { html += finding(x.ok, x.item, x.note); });
+  if (g && g.score != null) html += finding(g.score >= 80, 'Google Business Profile completeness: ' + g.score + '%', g.source);
+  if (m) html += finding(!!m.found, m.found ? m.activeCount + ' active Meta ad(s), running since ' + (m.oldestStart || '—') : 'No active Meta ads found', 'Meta Ad Library, ' + (m.asOf || ''));
+  if (ga) html += finding(!!ga.found, ga.found ? ga.creativeCount + ' Google ad creative(s) found' : 'No Google ads found in Transparency Center', ga.asOf || '');
+  // Reputation
+  const comp = d.competitors || [];
+  const idy = d.identity;
+  if (idy && idy.rating) {
+    html += `<h2>Your reputation vs. nearby competitors</h2><table><tr><th></th><th>Rating</th><th>Reviews</th></tr>
+      <tr><td><strong>${esc(name)}</strong></td><td>★ ${esc(idy.rating)}</td><td>${esc(idy.reviewCount||'—')}</td></tr>
+      ${comp.map(x=>`<tr><td>${esc(x.name)}</td><td>★ ${esc(x.rating||'—')}</td><td>${esc(x.reviewCount||'—')}</td></tr>`).join('')}</table>`;
+  }
+  // Demand + opportunity
+  if (k && k.top && k.top.length) {
+    html += `<h2>What your customers are searching for</h2><table><tr><th>Search term</th><th>Monthly searches</th><th>Cost per click</th></tr>
+      ${k.top.slice(0,8).map(x=>`<tr><td>${esc(x.keyword)}</td><td>${Number(x.volume).toLocaleString()}</td><td>${x.cpc!=null?'$'+x.cpc.toFixed(2):'—'}</td></tr>`).join('')}</table>`;
+  }
+  if (o && (o.demand || o.breakeven)) {
+    html += `<h2>What this is worth</h2>`;
+    if (o.demand) o.demand.models.forEach(mo => {
+      html += `<div class="cd-opp">Capturing just <strong>${mo.sharePct}%</strong> of the ${Number(o.demand.monthlySearches).toLocaleString()} monthly searches in your market ≈ <strong>${mo.leads} new customer inquiries</strong> ≈ <strong>$${mo.monthlyRevenueOpportunity.toLocaleString()}/month</strong> in revenue opportunity.</div>`;
+    });
+    if (o.breakeven) html += `<div class="cd-opp">${esc(o.breakeven.line)}.</div>`;
+    if (o.assumptions && o.assumptions.length) html += `<div style="font-size:10.5px;color:#8a9799;margin-top:6px">${o.assumptions.map(esc).join(' · ')}</div>`;
+  }
+  html += `<div class="cd-foot">Prepared by Townsquare Ignite. Sources: Google Business Profile, Google PageSpeed Insights, Meta Ad Library, Google Ads Transparency Center, ${esc(d.domain)} site analysis, and Townsquare Ignite category benchmarks — all data as of the dates shown. Figures marked as opportunity models are directional estimates based on stated assumptions, not guarantees.</div>
+  </div>`;
+  $('view-brief').innerHTML = `<div style="display:flex;gap:8px;margin-bottom:14px" class="brief-actions">
+    <button class="btn-ghost" id="btn-newsearch" onclick="toggleClientView()">← Back to internal brief</button>
+    <button class="btn-ghost" onclick="window.print()">⎙ Print / PDF leave-behind</button>
+  </div>` + html;
 }
 
 // ── Init ──
